@@ -1,14 +1,3 @@
-# takes in a configurable # of hymns x
-# takes count of hymns in table
-# no. of hymns times, selects random hymn
-	# checks that the hymn has not already been selected
-	# checks for last_practiced date and compares it to a configurable threshold
-	# if it's been greater than threshold days since practicing:
-		# add the hymn to list of hymns to return
-# does an execute many to update the last practiced dates for all the hymns that have been selected
-# sends an e-mail with the hymns and also logs the hymns
-# if e-mail is sent successfully: updates ctrl table for random_hymn_generator with last run (need to create this table) with SUCCESS, else FAILURE
-
 import configargparse
 import configparser
 import logging
@@ -98,7 +87,7 @@ def get_gmail_creds():
 
 
 def generate_email_body(lineup):
-	body = "\nHere are the hymns to practice today, {}:\n\n".format(
+	body = "Here are the hymns to practice today, {}:\n\n".format(
 		date.today().strftime("%Y-%m-%d"))
 	for hymn in lineup:
 		body += "\t{}: {}\n".format(
@@ -108,7 +97,6 @@ def generate_email_body(lineup):
 	body += "\n\nHave fun!\nAlly"
 	LOG.info(body)
 	return body
-
 
 
 def generate_emails(body, email_recipients, email_creds):
@@ -130,7 +118,6 @@ def send_emails(host, email_messages, host_creds):
 		server.starttls()
 		server.login(host_creds[0],host_creds[1])
 		for msg in email_messages:
-			LOG.info(msg)
 			server.send_message(msg)
 
 
@@ -167,6 +154,8 @@ if __name__=="__main__":
 		emails, 
 		gmail_creds)
 	update_last_practice(random_lineup, sql_conn, sql_cursor)
+	sql_conn.close(sql_cursor)
+	sql_conn.close_connection()
 
 
 
