@@ -1,4 +1,4 @@
-# takes in a configurable # of hymns
+# takes in a configurable # of hymns x
 # takes count of hymns in table
 # no. of hymns times, selects random hymn
 	# checks that the hymn has not already been selected
@@ -10,11 +10,16 @@
 # if e-mail is sent successfully: updates ctrl table for random_hymn_generator with last run (need to create this table) with SUCCESS, else FAILURE
 
 import configargparse
+import logging
+from datetime import date
 
 
 from mysql_connection import MySQLConnection
 
-
+logging.basicConfig(
+	format='%(asctime)s %(filename)s %(funcName)s %(levelname)s:  %(message)s', 
+	level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def get_args():
 	parser = configargparse.ArgParser(
@@ -35,6 +40,23 @@ def get_args():
 	return args
 
 
+def get_all_hymns(sql_conn, sql_cursor):
+	query = "SELECT distinct(hymn_num) FROM regular_hymns;"
+	results = sql_conn.run_query(sql_cursor, query)
+	hymns = [r['hymn_num'] for r in results]
+	return hymns
+
+
+
+
 if __name__=="__main__":
 	args = get_args()
+	sql_conn = MySQLConnection()
+	sql_cursor = sql_conn.cursor("DictCursor")
 	print(args)
+	hymns = get_all_hymns(sql_conn, sql_cursor)
+	print(hymns)
+	logger.warning('hello')
+
+
+
