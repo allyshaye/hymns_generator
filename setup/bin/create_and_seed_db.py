@@ -2,11 +2,6 @@ from mysql_connection import MySQLConnection
 from data_generator import DataGenerator
 
 
-# def get_sql_cursor(type='DictCursor'):
-# 	sql_conn = MySQLConnection()
-# 	return sql_conn.cursor(type='DictCursor')
-
-
 def get_raw_sql(sql_file):
 	with open(sql_file, 'r') as f:
 		query = f.read()
