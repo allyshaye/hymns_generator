@@ -15,7 +15,6 @@ def get_raw_sql(sql_file):
 def create_hymns_table(create_sql_file, sql_conn, sql_cursor):
 	create_sql = get_raw_sql(create_sql_file)
 	sql_conn.run_query(sql_cursor, create_sql)
-	sql_conn.commit()
 
 def seed_hymns_table(insert_sql_file, num_records, sql_conn, sql_cursor):
 	raw_sql = get_raw_sql(insert_sql_file)
@@ -32,7 +31,6 @@ def seed_hymns_table(insert_sql_file, num_records, sql_conn, sql_cursor):
 			revision_date = revision)
 		print(query)		
 		r = sql_conn.run_query(sql_cursor,query)
-		sql_conn.commit()
 		print(r)
 
 
