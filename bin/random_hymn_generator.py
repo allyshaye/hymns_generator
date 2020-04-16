@@ -51,7 +51,6 @@ def get_args():
 		type=str,
 		choices=['prod','dev'])
 	args = parser.parse_args()
-	LOG.info(args)
 	return args
 
 
@@ -62,6 +61,8 @@ def get_all_hymns(env,sql_conn, sql_cursor):
 
 
 def get_random_lineup(num_hymns, x_days_ago, hymns_list, sql_conn, sql_cursor):
+	# need to handle case when all hymns have been practiced within x_days_ago (infinite loop)
+	LOG.info("Generating random lineup!")
 	lineup = []
 	need_more_hymns = True
 	while need_more_hymns:
@@ -70,7 +71,7 @@ def get_random_lineup(num_hymns, x_days_ago, hymns_list, sql_conn, sql_cursor):
 			x_days_ago_date = date.today() - timedelta(days=x_days_ago)
 			if hymn['last_practiced'] is None:
 				lineup.append(hymn)
-			elif hymn['last_practiced'] <= x_days_ago_date:
+			elif hymn['last_practiced'].date() <= x_days_ago_date:
 				lineup.append(hymn)
 		if len(lineup) == num_hymns:
 			need_more_hymns = False
@@ -78,13 +79,12 @@ def get_random_lineup(num_hymns, x_days_ago, hymns_list, sql_conn, sql_cursor):
 
 
 def get_gmail_creds():
+	LOG.info("Obtaining Gmail credentials.")
 	config = configparser.ConfigParser()
 	config.read(DEFAULT_CRED_FILE)
 	if 'gmail' in config.sections():
 		user = config['gmail']['user']
 		password = config['gmail']['password']
-		LOG.info(user)
-		LOG.info(password)
 		return (user,password)
 	else:
 		LOG.error('missing gmail creds')
@@ -104,6 +104,7 @@ def generate_email_body(lineup):
 
 
 def generate_emails(body, email_recipients, email_creds):
+	LOG.info("Generating email objects.")
 	msgs = []
 	for r in email_recipients:
 		msg = EmailMessage()
@@ -117,6 +118,7 @@ def generate_emails(body, email_recipients, email_creds):
 
 
 def send_emails(host, email_messages, host_creds):
+	LOG.info("Sending {} e-mails".format(len(email_messages)))
 	with smtplib.SMTP(host) as server:
 		server.ehlo()
 		server.starttls()
@@ -126,6 +128,7 @@ def send_emails(host, email_messages, host_creds):
 
 
 def update_last_practice(lineup, sql_conn, sql_cursor,env):
+	LOG.info("Updating last practice dates for selected hymns.")
 	for hymn in lineup:
 		hymn_num = hymn['hymn_num']
 		today = date.today().strftime("%Y-%m-%d")
@@ -138,6 +141,7 @@ def update_last_practice(lineup, sql_conn, sql_cursor,env):
 
 if __name__=="__main__":
 	args = get_args()
+	LOG.info(args)
 	sql_conn = MySQLConnection()
 	sql_cursor = sql_conn.cursor("DictCursor")
 	hymns = get_all_hymns(args.env.lower(),sql_conn, sql_cursor)
