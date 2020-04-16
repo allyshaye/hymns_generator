@@ -10,16 +10,28 @@
 # if e-mail is sent successfully: updates ctrl table for random_hymn_generator with last run (need to create this table) with SUCCESS, else FAILURE
 
 import configargparse
+import configparser
 import logging
-from datetime import date
-
+from datetime import date, timedelta
+import random
+import smtplib
+import os
+from email.message import EmailMessage
 
 from mysql_connection import MySQLConnection
 
-logging.basicConfig(
-	format='%(asctime)s %(filename)s %(funcName)s %(levelname)s:  %(message)s', 
-	level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+DEFAULT_CRED_FILE='{}/.config/logins.ini'.format(os.environ['HOME'])
+
+def get_logger():
+	logging.basicConfig(
+		format='%(asctime)s %(filename)s %(funcName)s %(levelname)s:  %(message)s',
+		level=logging.DEBUG)
+	logger = logging.getLogger(__name__)
+	return logger
+
+
+LOG = get_logger()
+
 
 def get_args():
 	parser = configargparse.ArgParser(
@@ -35,28 +47,110 @@ def get_args():
 	parser.add_argument('--x_days_ago',
 		type=int,
 		default=15,
-		help="Returns hymns that haven't been selected within last x days")
+		help="Used to return hymns that haven't been selected within last x days")
+	parser.add_argument('--smtp_gmail_host',
+		type=str,
+		default='smtp.gmail.com:587',
+		help="SMTP email gmail host")
+	parser.add_argument('--email_recipients',
+		required=True,
+		action='append',
+		help='List of emails to send the lineup to')
 	args = parser.parse_args()
+	LOG.info(args)
 	return args
 
 
 def get_all_hymns(sql_conn, sql_cursor):
-	query = "SELECT distinct(hymn_num) FROM regular_hymns;"
-	results = sql_conn.run_query(sql_cursor, query)
-	hymns = [r['hymn_num'] for r in results]
+	query = "SELECT * FROM regular_hymns;"
+	hymns = sql_conn.run_query(sql_cursor, query)
 	return hymns
 
 
+def get_random_lineup(num_hymns, x_days_ago, hymns_list, sql_conn, sql_cursor):
+	lineup = []
+	need_more_hymns = True
+	while need_more_hymns:
+		hymn = random.choice(hymns_list)
+		if hymn not in lineup:
+			x_days_ago_date = date.today() - timedelta(days=x_days_ago)
+			if hymn['last_practiced'] is None:
+				lineup.append(hymn)
+			elif hymn['last_practiced'] <= x_days_ago_date:
+				lineup.append(hymn)
+		if len(lineup) == num_hymns:
+			need_more_hymns = False
+	return lineup
+
+
+def get_gmail_creds():
+	config = configparser.ConfigParser()
+	config.read(DEFAULT_CRED_FILE)
+	if 'gmail' in config.sections():
+		user = config['gmail']['user']
+		password = config['gmail']['password']
+		LOG.info(user)
+		LOG.info(password)
+		return (user,password)
+	else:
+		LOG.error('missing gmail creds')
+
+
+def generate_email_body(lineup):
+	body = "\nHere are the hymns to practice today, {}:\n\n".format(
+		date.today().strftime("%Y-%m-%d"))
+	for hymn in lineup:
+		body += "\t{}: {}\n".format(
+			str(hymn['hymn_num']),
+			hymn['title'])
+
+	body += "\n\nHave fun!\nAlly"
+	LOG.info(body)
+	return body
+
+
+
+def generate_emails(body, email_recipients, email_creds):
+	msgs = []
+	for r in email_recipients:
+		msg = EmailMessage()
+		msg['From'] = email_creds[0] + '@gmail.com'
+		msg['To'] = r
+		msg['Subject'] = "Practice Lineup {}".format(
+			date.today().strftime("%Y-%m-%d"))
+		msg.set_content(body)
+		msgs.append(msg)
+	return msgs
+
+
+def send_emails(host, email_messages, host_creds):
+	with smtplib.SMTP(host) as server:
+	# server = smtplib.SMTP(host)
+		server.ehlo()
+		server.starttls()
+		server.login(host_creds[0],host_creds[1])
+		for msg in email_messages:
+			LOG.info(msg)
+			server.send_message(msg)
 
 
 if __name__=="__main__":
 	args = get_args()
 	sql_conn = MySQLConnection()
 	sql_cursor = sql_conn.cursor("DictCursor")
-	print(args)
 	hymns = get_all_hymns(sql_conn, sql_cursor)
-	print(hymns)
-	logger.warning('hello')
+	random_lineup = get_random_lineup(
+		args.num_hymns,
+		args.x_days_ago,
+		hymns,
+		sql_conn,
+		sql_cursor)
+	for i in random_lineup:
+		LOG.info('{}\n'.format(i))
+	email_body = generate_email_body(random_lineup)
+	gmail_creds = get_gmail_creds()
+	emails = generate_emails(email_body,args.email_recipients, gmail_creds)
+	send_emails(args.smtp_gmail_host, emails, gmail_creds)
 
 
 
