@@ -22,6 +22,7 @@ from mysql_connection import MySQLConnection
 
 DEFAULT_CRED_FILE='{}/.config/logins.ini'.format(os.environ['HOME'])
 
+
 def get_logger():
 	logging.basicConfig(
 		format='%(asctime)s %(filename)s %(funcName)s %(levelname)s:  %(message)s',
@@ -125,13 +126,24 @@ def generate_emails(body, email_recipients, email_creds):
 
 def send_emails(host, email_messages, host_creds):
 	with smtplib.SMTP(host) as server:
-	# server = smtplib.SMTP(host)
 		server.ehlo()
 		server.starttls()
 		server.login(host_creds[0],host_creds[1])
 		for msg in email_messages:
 			LOG.info(msg)
 			server.send_message(msg)
+
+
+def update_last_practice(lineup, sql_conn, sql_cursor):
+	for hymn in lineup:
+		hymn_num = hymn['hymn_num']
+		today = date.today().strftime("%Y-%m-%d")
+		query = "UPDATE regular_hymns SET last_practiced = '{}' WHERE hymn_num = {}".format(
+			today,hymn_num)
+		LOG.info(query)
+		sql_conn.run_query(sql_cursor, query)
+
+
 
 
 if __name__=="__main__":
@@ -145,12 +157,16 @@ if __name__=="__main__":
 		hymns,
 		sql_conn,
 		sql_cursor)
-	for i in random_lineup:
-		LOG.info('{}\n'.format(i))
 	email_body = generate_email_body(random_lineup)
 	gmail_creds = get_gmail_creds()
-	emails = generate_emails(email_body,args.email_recipients, gmail_creds)
-	send_emails(args.smtp_gmail_host, emails, gmail_creds)
+	emails = generate_emails(
+		email_body,
+		args.email_recipients, 
+		gmail_creds)
+	send_emails(args.smtp_gmail_host, 
+		emails, 
+		gmail_creds)
+	update_last_practice(random_lineup, sql_conn, sql_cursor)
 
 
 
