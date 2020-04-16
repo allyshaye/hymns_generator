@@ -46,13 +46,17 @@ def get_args():
 		required=True,
 		action='append',
 		help='List of emails to send the lineup to')
+	parser.add_argument('--env',
+		required=True,
+		type=str,
+		choices=['prod','dev'])
 	args = parser.parse_args()
 	LOG.info(args)
 	return args
 
 
-def get_all_hymns(sql_conn, sql_cursor):
-	query = "SELECT * FROM regular_hymns;"
+def get_all_hymns(env,sql_conn, sql_cursor):
+	query = "SELECT * FROM regular_hymns_{};".format(env)
 	hymns = sql_conn.run_query(sql_cursor, query)
 	return hymns
 
@@ -121,12 +125,11 @@ def send_emails(host, email_messages, host_creds):
 			server.send_message(msg)
 
 
-def update_last_practice(lineup, sql_conn, sql_cursor):
+def update_last_practice(lineup, sql_conn, sql_cursor,env):
 	for hymn in lineup:
 		hymn_num = hymn['hymn_num']
 		today = date.today().strftime("%Y-%m-%d")
-		query = "UPDATE regular_hymns SET last_practiced = '{}' WHERE hymn_num = {}".format(
-			today,hymn_num)
+		query = "UPDATE regular_hymns_{} SET last_practiced = '{}' WHERE hymn_num = {}".format(env,today,hymn_num)
 		LOG.info(query)
 		sql_conn.run_query(sql_cursor, query)
 
@@ -137,7 +140,7 @@ if __name__=="__main__":
 	args = get_args()
 	sql_conn = MySQLConnection()
 	sql_cursor = sql_conn.cursor("DictCursor")
-	hymns = get_all_hymns(sql_conn, sql_cursor)
+	hymns = get_all_hymns(args.env.lower(),sql_conn, sql_cursor)
 	random_lineup = get_random_lineup(
 		args.num_hymns,
 		args.x_days_ago,
@@ -153,8 +156,8 @@ if __name__=="__main__":
 	send_emails(args.smtp_gmail_host, 
 		emails, 
 		gmail_creds)
-	update_last_practice(random_lineup, sql_conn, sql_cursor)
-	sql_conn.close(sql_cursor)
+	update_last_practice(random_lineup, sql_conn, sql_cursor,args.env.lower())
+	sql_conn.close_cursor(sql_cursor)
 	sql_conn.close_connection()
 
 
