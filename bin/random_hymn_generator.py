@@ -6,7 +6,6 @@ import random
 import smtplib
 import os
 from email.message import EmailMessage
-
 from mysql_connection import MySQLConnection
 
 DEFAULT_CRED_FILE='{}/.config/logins.ini'.format(os.environ['HOME'])
@@ -14,7 +13,8 @@ DEFAULT_CRED_FILE='{}/.config/logins.ini'.format(os.environ['HOME'])
 
 def get_logger():
 	logging.basicConfig(
-		format='%(asctime)s %(filename)s %(funcName)s %(levelname)s:  %(message)s',
+		format='%(asctime)s %(filename)s %(funcName)s (%(levelname)s):  %(message)s',
+		datefmt='%m/%d/%Y %I:%M:%S %p',
 		level=logging.DEBUG)
 	logger = logging.getLogger(__name__)
 	return logger
@@ -132,7 +132,8 @@ def update_last_practice(lineup, sql_conn, sql_cursor,env):
 	for hymn in lineup:
 		hymn_num = hymn['hymn_num']
 		today = date.today().strftime("%Y-%m-%d")
-		query = "UPDATE regular_hymns_{} SET last_practiced = '{}' WHERE hymn_num = {}".format(env,today,hymn_num)
+		query = "UPDATE regular_hymns_{} SET last_practiced = '{}' WHERE hymn_num = {}".format(
+			env,today,hymn_num)
 		LOG.info(query)
 		sql_conn.run_query(sql_cursor, query)
 
