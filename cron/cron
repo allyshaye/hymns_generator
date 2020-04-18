@@ -1,0 +1,8 @@
+SHELL=/bin/sh
+VENV=/Users/allisonines/python3 
+HYMN_GENERATOR_BASE=/Users/allisonines/Desktop/repos/hymns_generator
+PYTHONPATH=/Users/allisonines/Desktop/repos/hymns_generator/ally-libs/python
+LOG_BASE=/var/ally/log/random_hymn_generator
+
+0 6 * * * source $VENV/bin/activate; export PYTHONPATH=$PYTHONPATH; cd $HYMN_GENERATOR_BASE; python bin/random_hymn_generator.py -c cfg/random_hymn_generator.PROD.cfg >> $LOG_BASE/$(date +\%Y-\%m-\%d).log 2>&1
+
