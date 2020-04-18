@@ -2,7 +2,9 @@
 
 ## Environment Setup
 - Python Version: 3.7.7
-- export PYTHONPATH=../ally-libs/python
+- `pip install -r ally-libs/python/requirements.txt`
+- `export PYTHONPATH=ally-libs/python`
+- Hymns are stored in MySQL tables
 
 ## Run
 
@@ -31,5 +33,5 @@
 	04/18/2020 11:42:05AM - random_hymn_generator.py - generate_emails (INFO):  Generating email objects.
 	04/18/2020 11:42:06AM - random_hymn_generator.py - send_emails (INFO):  Sending e-mail to allisonshaye@gmail.com
 	04/18/2020 11:42:07AM - random_hymn_generator.py - update_last_practice (INFO):  Updating last practice dates for selected hymns in MySQL control tables
-	04/18/2020 11:42:07AM - random_hymn_generator.py - close_sql (INFO):  Closing MySQL connection`
+	04/18/2020 11:42:07AM - random_hymn_generator.py - close_sql (INFO):  Closing MySQL connection
 
