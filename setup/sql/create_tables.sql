@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS regular_hymns (
+CREATE TABLE IF NOT EXISTS regular_hymns_dev (
 	`hymn_num` int NOT NULL,
 	`title` varchar(256) NOT NULL,
 	`revision_date` date NOT NULL,
