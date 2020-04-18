@@ -6,7 +6,16 @@
 - `export PYTHONPATH=ally-libs/python`
 - Hymns are stored in MySQL tables
 
-## Run
+## Create hymns table and seed database using Faker
+`python bin/create_and_seed_db.py -c cfg/create_and_seed.DEV.cfg `
+
+	04/18/2020 12:45:34PM - app.py - start (INFO):  APP START
+	04/18/2020 12:45:34PM - create_and_seed_db.py - _run (INFO):  Namespace(config='cfg/create_and_seed.DEV.cfg', create_sql_file='sql/create_tables.sql', env='dev', insert_sql_file='sql/insert.sql', loglevel=20, num_records=100)
+	04/18/2020 12:45:34PM - create_and_seed_db.py - create_hymns_table (INFO):  Creating hymns table
+	04/18/2020 12:45:34PM - create_and_seed_db.py - seed_hymns_table (INFO):  Seeding hymns table
+	04/18/2020 12:45:34PM - create_and_seed_db.py - close_sql (INFO):  Closing MySQL connection
+
+## Random Hymn generator
 
 `nohup python bin/random_hymn_generator.py -c cfg/random_hymn_generator.DEV.cfg >> /var/ally/log/random_hymn_generator/$(date +\%Y-\%m-%\d).log 2>&1`
 
