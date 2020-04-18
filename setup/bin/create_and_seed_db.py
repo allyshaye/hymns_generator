@@ -1,7 +1,3 @@
-import configparser
-import smtplib
-import os
-import sys
 from main.app import App
 from mysql_connection import MySQLConnection
 from data_generator import DataGenerator
@@ -60,7 +56,7 @@ class CreateAndSeedDevDb(App):
 				hymn_num = hymn,
 				title = t,
 				revision_date = revision)
-			r = sql_conn.run_query(sql_cursor,query)
+			sql_conn.run_query(sql_cursor,query)
 
 
 	def close_sql(self, sql_conn, sql_cursor):

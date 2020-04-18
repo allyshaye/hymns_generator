@@ -1,10 +1,10 @@
 import configparser
-from datetime import date, timedelta
 import random
 import smtplib
 import os
-from email.message import EmailMessage
 import sys
+from email.message import EmailMessage
+from datetime import date, timedelta
 from mysql_connection import MySQLConnection
 from main.app import App
 
